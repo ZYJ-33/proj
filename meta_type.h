@@ -1,0 +1,7 @@
+#define META_BASIC 0 
+#define META_DATA 1
+#define META_KEY_DATA 2
+#define META_KEY_CHILD 3
+#define META_THERE_CHILD 4
+#define META_TWO_CHILD 5
+#define META_ONE_CHILD 6
