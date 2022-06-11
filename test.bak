@@ -1,0 +1,67 @@
+{
+    "progarm":
+    [
+        {
+            "input_addr":
+             {
+                "addr": "0x9090",
+                "tile_height": 45,
+                "tile_width": 45,
+                "byte_perline": 100,
+                "byte_perchan": 500
+             },
+            "operators":
+            {
+               "conv3":
+                {
+                    "weight_file":"hello_world",
+                    "type":"int8",
+                    "chan_num":18
+                },
+                "activate":
+                {
+                     "pos_slope":2,
+                     "neg_slope":3,
+                     "pos_thd": 255
+                },
+                "maxpool":
+                {
+                    
+                }
+            },
+            "write_back":
+            {
+                "addr": "0x7878",
+                "byte_perchan": 34,
+                "byte_perline": 24
+            }
+        },
+
+        {
+             "input_addr":
+             {
+                "addr": "0x9090",
+                "tile_height": 45,
+                "tile_width": 45,
+                "byte_perline": 100,
+                "byte_perchan": 500
+             },
+ 
+            "operators":
+            {
+                "quantize":
+                {
+                    "pos_slope": 54,
+                    "neg_slope": 60
+                },
+                "maxpool":{}
+            },
+            "write_back":
+            {
+                "addr": "0x8989",
+                "byte_perchan": 34,
+                "byte_perline": 24
+            }
+        }
+    ]
+}

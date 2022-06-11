@@ -27,7 +27,8 @@ char* cut(char* text)
 (\n)+   {}
 (\t)+   {}
 [1-9][0-9]* {yylval.num = atoi(yytext); return NUM;}
-"\""[a-zA-Z0-9_]*"\"" {yylval.str = cut(yytext); return STRING;}
+0 {yylval.num = 0; return NUM;}
+"\""[a-zA-Z0-9_. -]*"\"" {yylval.str = cut(yytext); return STRING;}
 "true" {yylval.boolean = 1; return BOOL;}
 "false" {yylval.boolean = 0; return BOOL;}
 <<EOF>> {return 0;}

@@ -1,0 +1,26 @@
+{
+    "progarm":
+    [
+        {
+            "input_addr":
+            {
+                "tile_height":32,
+                "tile_width":32,
+                "addr" : "0x7878",
+                "byte_perline" : 100,
+                "byte_perchan" : 40
+                
+            },
+            "operators":
+            {
+                "maxpool":{}
+            },
+            "write_back":
+            {
+                "addr": "0x8989",
+                "byte_perline" : 43,
+                "byte_perchan" : 40
+            }
+        }
+    ]
+}

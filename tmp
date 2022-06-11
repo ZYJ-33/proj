@@ -1,0 +1,80 @@
+convert.c: In function ‘test’:
+convert.c:123:24: warning: passing argument 1 of ‘fp32_to_bf16’ from incompatible pointer type [-Wincompatible-pointer-types]
+  123 |     res = fp32_to_bf16(&c);
+      |                        ^~
+      |                        |
+      |                        int *
+convert.c:13:26: note: expected ‘float *’ but argument is of type ‘int *’
+   13 | BF16 fp32_to_bf16(float* f)
+      |                   ~~~~~~~^
+tree.tab.c: In function ‘yyparse’:
+tree.tab.c:1247:16: warning: implicit declaration of function ‘yylex’ [-Wimplicit-function-declaration]
+ 1247 |       yychar = yylex ();
+      |                ^~~~~
+tree.y:52:59: warning: passing argument 2 of ‘new_data_node’ makes pointer from integer without a cast [-Wint-conversion]
+   52 |       | NUM {$$ = new_data_node(NUM_NODE, $1);}
+      |                                                           ^    
+      |                                                           |
+      |                                                           int
+In file included from tree.y:3:
+ast.h:14:20: note: expected ‘char *’ but argument is of type ‘int’
+   14 | struct basic_node* new_data_node(int type, char* data);
+      |                    ^~~~~~~~~~~~~
+tree.y:53:61: warning: passing argument 2 of ‘new_data_node’ makes pointer from integer without a cast [-Wint-conversion]
+   53 |       | BOOL {$$ = new_data_node(BOOL_NODE, $1);}
+      |                                                             ^        
+      |                                                             |
+      |                                                             int
+In file included from tree.y:3:
+ast.h:14:20: note: expected ‘char *’ but argument is of type ‘int’
+   14 | struct basic_node* new_data_node(int type, char* data);
+      |                    ^~~~~~~~~~~~~
+semantic/check.c: In function ‘check_soft_instr’:
+semantic/check.c:707:36: warning: passing argument 1 of ‘check_soft_addr’ from incompatible pointer type [-Wincompatible-pointer-types]
+  707 |             check_soft_addr(cur->kv->val);
+      |                             ~~~~~~~^~~~~
+      |                                    |
+      |                                    struct val_node *
+semantic/check.c:641:39: note: expected ‘struct obj_node *’ but argument is of type ‘struct val_node *’
+  641 | void check_soft_addr(struct obj_node* obj)
+      |                      ~~~~~~~~~~~~~~~~~^~~
+semantic/check.c: In function ‘check_instrs’:
+semantic/check.c:868:13: warning: implicit declaration of function ‘set_soft_instr_default’ [-Wimplicit-function-declaration]
+  868 |             set_soft_instr_default(cur_instr_data);
+      |             ^~~~~~~~~~~~~~~~~~~~~~
+semantic/check.c:875:13: warning: implicit declaration of function ‘set_hard_instr_default’ [-Wimplicit-function-declaration]
+  875 |             set_hard_instr_default(cur_instr_data);
+      |             ^~~~~~~~~~~~~~~~~~~~~~
+semantic/check.c:882:9: warning: implicit declaration of function ‘config_setup’ [-Wimplicit-function-declaration]
+  882 |         config_setup(cur_instr);
+      |         ^~~~~~~~~~~~
+code_gen/code_gen.c: In function ‘set_weights’:
+code_gen/code_gen.c:37:9: warning: implicit declaration of function ‘panic’ [-Wimplicit-function-declaration]
+   37 |         panic("");
+      |         ^~~~~
+code_gen/code_gen.c:51:35: error: ‘weight’ undeclared (first use in this function); did you mean ‘weights’?
+   51 |     u_int64_t* ptr = (u_int64_t*)(weight+weight_cur_index);
+      |                                   ^~~~~~
+      |                                   weights
+code_gen/code_gen.c:51:35: note: each undeclared identifier is reported only once for each function it appears in
+code_gen/code_gen.c: At top level:
+code_gen/code_gen.c:169:6: warning: conflicting types for ‘panic’
+  169 | void panic(const char* s)
+      |      ^~~~~
+code_gen/code_gen.c:37:9: note: previous implicit declaration of ‘panic’ was here
+   37 |         panic("");
+      |         ^~~~~
+code_gen/code_gen.c: In function ‘set_quantize_word’:
+code_gen/code_gen.c:489:44: warning: format ‘%lx’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘int’ [-Wformat=]
+  489 |     printf("set_quantize_word pos_slope: %lx, neg_slope: %lx, bias: %lx, factor: %lx\n", pos_slope, neg_slope, bias, factor);
+      |                                          ~~^                                             ~~~~~~~~~
+      |                                            |                                             |
+      |                                            long unsigned int                             int
+      |                                          %x
+code_gen/code_gen.c:489:60: warning: format ‘%lx’ expects argument of type ‘long unsigned int’, but argument 3 has type ‘int’ [-Wformat=]
+  489 |     printf("set_quantize_word pos_slope: %lx, neg_slope: %lx, bias: %lx, factor: %lx\n", pos_slope, neg_slope, bias, factor);
+      |                                                          ~~^                                        ~~~~~~~~~
+      |                                                            |                                        |
+      |                                                            long unsigned int                        int
+      |                                                          %x
+make: *** [Makefile:13: build] Error 1

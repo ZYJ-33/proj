@@ -1,0 +1,47 @@
+{
+    "progarm":
+    [
+        {
+            "input_addr":
+            {
+                "addr" : "0x8080",
+                "tile_height" : 54,
+                "tile_width" : 32,
+                "byte_perline" : 100,
+                "byte_perchan" : 100
+            },
+            
+            "operators":
+            {
+                "conv3":
+                {
+                    "weight_file" : "hello",
+                    "chan_num" : 54
+                },
+                "activate":
+                {
+                    "pos_slope":"2.13",
+                    "neg_slope":"4.56",
+                    "pos_thd":255
+                }
+            },
+            
+            "write_back":
+            {
+                "addr" : "0x7878",
+                "byte_perline" : 50,
+                "byte_perchan" : 45
+            }
+        },
+
+        {
+            "soft":true,
+            "name":"op",
+            "paras":
+            {
+                "key1":"value1",
+                "key2":"value2"
+            }
+        }
+    ]
+}
