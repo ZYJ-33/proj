@@ -6,6 +6,7 @@
 #include <string.h>
 #include "../weight.h"
 #include "../convert.h"
+#include "../write_bin/write_bin.h"
 
 #define SET_BIT(WORD, WHICH) (WORD | (1 << WHICH))
 #define CLEAN_BIT(WORD, WHICH) (WORD & ~(1 << WHICH))
@@ -13,10 +14,10 @@
 
 #define TRUE 1
 #define FALSE 0
+#define WORD_LEN 32
 extern char* weights;
 extern u_int32_t weight_cur_index;
 extern u_int32_t weight_len;
-
 
 void set_hard_instr_default(struct instr_data* instr)
 {
@@ -31,6 +32,7 @@ void set_soft_instr_default(struct instr_data* instr)
 void set_weights(struct instr_data* instr, u_int32_t channum, u_int32_t ker_size)
 {
     set_has_weight(instr);
+    instr->has_weight = 1;
     if(channum >= 256)
     {
         printf("channum: %d too much", channum);
@@ -46,8 +48,7 @@ void set_weights(struct instr_data* instr, u_int32_t channum, u_int32_t ker_size
         panic("no enought weights");
     }
     int total = ker_size * channum;
-    printf("TODO: find out what happen when weight are not 64 byte align\n");
-    
+    instr->weight_count = ((total + 8 - 1)/8)*8; 
     u_int64_t* ptr = (u_int64_t*)(weights+weight_cur_index);
     while(total - 8 >= 0)
     {
@@ -184,45 +185,54 @@ void travel_data(struct instr_data* data)
 {
     printf("Config: %lx\n", data->config);
     output_binary(data->config, 64);
+    write_bin_64(data->config);
     if(data->has_conv_size)
     {
             printf("Conv size: %lx\n", data->conv_size);
             output_binary(data->conv_size, 64);
+            write_bin_64(data->conv_size);
     }
     if(data->has_accu_b_size)
     {
             printf("Accu B Size: %lx\n", data->accu_b_size);
             output_binary(data->accu_b_size, 64);
+            write_bin_64(data->accu_b_size);
     }
     if(data->has_accu_c_size)
     {
             printf("Accu C Size: %lx\n", data->accu_c_size);
             output_binary(data->accu_c_size, 64);
+            write_bin_64(data->accu_c_size);
     }
     if(data->has_wb_size)
     {
             printf("Wb Size: %lx\n", data->wb_size);
             output_binary(data->wb_size, 64);
+            write_bin_64(data->wb_size);
     }
     if(data->has_base_addr0)
     {
             printf("base_addr0: %lx\n", data->base_addr0);
             output_binary(data->base_addr0, 64);
+            write_bin_64(data->base_addr0);
     }
     if(data->has_base_addr1)
     {
             printf("base_addr1: %lx\n", data->base_addr1);
             output_binary(data->base_addr1, 64);
+            write_bin_64(data->base_addr1);
     }
     if(data->has_quanti)
     {
             printf("quanti: %lx\n", data->quanti);
             output_binary(data->quanti, 64);
+            write_bin_64(data->quanti);
     }
     if(data->has_acti)
     {
             printf("acti: %lx\n", data->acti);
             output_binary(data->acti, 64);
+            write_bin_64(data->acti);
     }
 }
 
@@ -232,20 +242,93 @@ void travel_weight(struct weight_list* l)
     while(cur)
     {
         printf("%x ", cur->weight);
+        write_bin_64(cur->weight);
         cur = cur->next;
     }
+}
+
+u_int64_t instr_hdr(u_int8_t id, u_int8_t type, u_int16_t len)
+{
+    u_int64_t hdr = 0;
+    hdr |= len;
+    hdr |= ((u_int64_t)type << 16);
+    hdr |= ((u_int64_t)id << 24);
+    hdr |= ((u_int64_t)0x7878 << 32);
+    return hdr;
+}
+
+u_int8_t total_instr_count = 0;
+void write_hardinstrs(struct instrs* first, struct instrs* last, u_int32_t len)
+{
+    if(total_instr_count == 255)
+            panic("total instr has over 255");
+    u_int64_t hdr = instr_hdr(total_instr_count++, HARD, len);
+    write_bin_64(hdr);
+    while(first != last)
+    {
+        travel_data(first->data);
+        if(first->data->has_weight)
+            travel_weight(first->data->weights);
+        first = first->next;
+    }
+    travel_data(first->data);
+    if(first->data->has_weight)
+            travel_weight(first->data->weights);
+}
+
+void write_softinstr(struct instrs* instr)
+{
+    printf("write to soft operator not impl yet\n");
+}
+
+void init_write_buf(struct instrs* go)
+{
+    u_int32_t total = 0;
+    while(go->next)
+    {
+        total += 8;
+        total += (get_len(go->hdr)*WORD_LEN)/8;
+        go = go->next;
+    }
+    char* buf = (char*) malloc(total);
+    write_bin_init(buf, total);
 }
 
 void code_gen(struct instrs* instrs)
 {
     struct instrs* instr = instrs;
+    struct instrs* first_hard = 0;
+    struct instrs* last_hard = 0;
+    u_int8_t last_type = 2;
+    u_int32_t hard_len = 0;
+    init_write_buf(instrs); 
     while(instr->next != 0)
     {
-        travel_hdr(instr->hdr);
-        travel_data(instr->data);
-        travel_weight(instr->data->weights); 
-        instr = instr->next;
+       if(get_type(instr->hdr) == HARD)
+       {
+            if(first_hard == 0)
+                    first_hard = instr;
+            last_hard = instr;
+            hard_len += get_len(instr->hdr);
+            last_type = HARD;
+       }
+       else if(get_type(instr->hdr) == SOFT)
+       {
+            if(first_hard != 0)
+                write_hardinstrs(first_hard, last_hard, hard_len);
+            first_hard = 0;
+            hard_len = 0;
+            write_softinstr(instr);
+            last_type = SOFT;
+       }
+       else
+       {
+            panic("unknow instr type");
+       }
+       instr = instr->next;
     }
+    if(last_type == HARD)
+        write_hardinstrs(first_hard, last_hard, hard_len);
 }
 
 struct instrs* new_instrs()
@@ -255,26 +338,33 @@ struct instrs* new_instrs()
     return instrs;
 }
 
-struct instr_header* new_header(u_int32_t id, u_int32_t type, u_int32_t len)
+struct instr_header* new_header(u_int8_t id, u_int8_t type, u_int16_t len)
 {
-    if(id >= POWER_OF_TWO(8))
-            panic("hdr id too large");
-    else if(type >= POWER_OF_TWO(8))
-            panic("hdr type too large");
-    else if(len >= POWER_OF_TWO(16))
-            panic("hdr len too large");
-
     struct instr_header* hdr = malloc(sizeof(*hdr));
     memset(hdr, 0, sizeof(*hdr));
-
     hdr->magic = HEADER_MAGIC;
     hdr->word |= len;
-    hdr->word |= (type << 16);
-    hdr->word |= (id << 24);
+    hdr->word |= ((u_int32_t)type << 16);
+    hdr->word |= ((u_int32_t)id << 24);
+}
+
+u_int8_t get_type(struct instr_header *header)
+{
+    return (header->word & 0x00FF0000) >> 16;
+}
+
+u_int16_t get_len(struct instr_header* header)
+{
+    return header->word & 0x0000FFFF;
+}
+
+void set_len(struct instr_header* header, u_int16_t len)
+{
+    header->word &= 0xFFFF0000;
+    header->word |= (u_int32_t)len;
 }
 
 static u_int32_t glb_count = 0;
-#define WORD_LEN 32
 
 struct instr_header* calculate_header(struct instr_data* data)
 {
@@ -296,6 +386,9 @@ struct instr_header* calculate_header(struct instr_data* data)
             len += 64/WORD_LEN;
     if(data->has_quanti)
             len += 64/WORD_LEN;
+    if(data->has_weight)
+            len += (data->weight_count * 8)/WORD_LEN;
+
     if(data->type == HARD)
         return new_header(id, HARD, len);
     else if(data->type == SOFT)
@@ -495,21 +588,17 @@ void set_baseaddr1_word(struct instr_data* instr, u_int64_t accuc_addr, u_int64_
     instr->base_addr1 = word;
 }
 
-void set_quantize_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, u_int64_t bias, u_int64_t factor)
+void set_quantize_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, BF16 bias, BF16 factor)
 {
     printf("set_quantize_word pos_slope: %lx, neg_slope: %lx, bias: %lx, factor: %lx\n", pos_slope, neg_slope, bias, factor);
-    if(bias >= POWER_OF_TWO(16))
-            panic("bias too large");
-    else if(factor >= POWER_OF_TWO(16))
-            panic("factor too large");
     
     instr->has_quanti = 1;
-    u_int64_t word = instr->quanti;
+    u_int64_t word = 0;
     
     word |= (u_int64_t)pos_slope;
     word |= (((u_int64_t)neg_slope) << 16);
-    word |= (bias << 32);
-    word |= (factor << 48);
+    word |= ((u_int64_t)bias << 32);
+    word |= ((u_int64_t)factor << 48);
 
     instr->quanti = word;
 }

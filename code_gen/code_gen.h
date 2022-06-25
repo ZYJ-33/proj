@@ -15,6 +15,8 @@
 #define WRITE_BACK_ADDR(WORD) (CLEAN_LOW_BIT(WORD, 32) >> 32)
 #define QUANTI_ACCUB_FACTOR(WORD) (CLEAN_LOW_BIT(WORD, 48) >> 48)
 #define QUANTI_ACCUC_VALUE(WORD) (GET_BIT_BETWEEN(WORD, 32, 47))
+#define QUANTI_POS_SLOPE(WORD) (GET_BIT_BETWEEN(WORD, 0, 15))
+#define QUANTI_NEG_SLOPE(WORD) (GET_BIT_BETWEEN(WORD, 16, 31))
 
 struct instr_data
 {
@@ -55,6 +57,8 @@ struct instr_data
     int has_quanti;
     u_int64_t quanti;
 
+    int has_weight;
+    u_int32_t weight_count;
     struct weight_list* weights;
 };
 
@@ -66,7 +70,10 @@ struct instr_header
     u_int32_t magic;
 };
 
-struct instr_header* new_header(u_int32_t id, u_int32_t type, u_int32_t len);
+struct instr_header* new_header(u_int8_t id, u_int8_t type, u_int16_t len);
+u_int8_t get_type(struct instr_header* header);
+u_int16_t get_len(struct instr_header* header);
+void set_len(struct instr_header* header, u_int16_t len);
 struct instr_header* calculate_header(struct instr_data* data);
 
 struct instrs
@@ -89,7 +96,7 @@ void set_conv_size_word(struct instr_data* instr, u_int64_t tw, u_int64_t th, u_
 void set_wb_size_word(struct instr_data* instr, u_int64_t bpl, u_int64_t bpc);
 void set_baseaddr0_word(struct instr_data *instr, u_int64_t conv_addr, u_int64_t accub_addr);
 void set_baseaddr1_word(struct instr_data *instr, u_int64_t accuc_addr, u_int64_t wb_addr);
-void set_quantize_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, u_int64_t bias, u_int64_t factor);
+void set_quantize_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, BF16 bias, BF16 factor);
 void set_acti_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, BF16 pos_thd, BF16 neg_thd);
 void set_conv_channum(struct instr_data* instr, u_int64_t channum);
 void set_post_mode(struct instr_data* instr, u_int64_t post);

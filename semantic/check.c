@@ -106,6 +106,17 @@ void check_conv3(struct obj_node* obj)
         else if(strcmp(kv->key, "bias") == 0)
         {
             bias = TRUE;
+            if(kv->val->type != STR)
+                panic("bias should be float string");
+            float bias_float = to_float(kv->val->str);
+            BF16 bias_bf = fp32_to_bf16(&bias_float);
+            set_quantize_word(
+                            cur_instr_data, 
+                            (BF16)QUANTI_POS_SLOPE(cur_instr_data->quanti), 
+                            (BF16)QUANTI_NEG_SLOPE(cur_instr_data->quanti),
+                            bias_bf,
+                            (BF16)QUANTI_ACCUB_FACTOR(cur_instr_data->quanti)
+                            );
         }
         else if(strcmp(kv->key, "pad") == 0)
         {
@@ -795,6 +806,8 @@ void check_accuc_conflict(struct obj_node* instr)
     if (has_other == TRUE && has_bias == TRUE)
                     panic("can not have other_addr and bias in the same instr");
 }
+
+
 
 void check_hard_instr(struct obj_node* instr)
 {

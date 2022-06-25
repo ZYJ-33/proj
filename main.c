@@ -5,7 +5,9 @@
 #include "./inner_node.h"
 #include "./semantic/check.h"
 #include "weight.h"
+#include "./write_bin/write_bin.h"
 #define LEN 500
+
 extern void print_node(struct basic_node*);
 extern void yyparse();
 struct basic_node* root;
@@ -29,6 +31,8 @@ int main(int argc, char* argv[])
     struct obj_node* res = transit_obj(((struct two_child_node*)root));
     init_weight(bytes, LEN);
     check_progarm(res);
+    
+    output_res();    
     printf("semantic check pass\n");
     return 0; 
     
