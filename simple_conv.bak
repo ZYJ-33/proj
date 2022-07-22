@@ -1,0 +1,59 @@
+{
+    "progarm":
+    [
+        {
+                "input_addr":
+                {
+                    "tile_height":32,
+                    "tile_width":32,
+                    "addr": "0x7878",
+                    "byte_perline":100,
+                    "byte_perchan":50
+                },
+                "other_addr":
+                {
+                    "tile_height": 43,
+                    "tile_width": 43,
+                    "addr": "0x8989",
+                    "byte_perline": 100,
+                    "byte_perchan": 50
+                },
+                "operators":
+                {
+                    "conv3":
+                    {
+                        "chan_num": 54,
+                        "pad": [1,1,1,0]
+                    },
+                    "activate":
+                    {
+                        "pos_slope" : "0.32",
+                        "neg_slope" : "-1"
+                    },
+                    "quantize":
+                    {
+                        "pos_slope" : "3.4",
+                        "neg_slope" : "5"
+                    }
+                },
+                "write_back":
+                {
+                    "addr": "0x9090",
+                    "byte_perline": 50,
+                    "byte_perchan": 60
+                }
+        },
+        {
+            "soft": true,
+            "name": "averge_pool",
+            "addr": 
+            {
+                "tile_width" : 20,
+                "tile_height": 30,
+                "input_addr" : "0x8080",
+                "output_addr": "0x9090"
+            }
+        }
+    ]
+}
+

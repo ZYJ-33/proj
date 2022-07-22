@@ -1,5 +1,6 @@
 #include "../inner_node.h"
 #include "../code_gen/code_gen.h"
+#include "../soft_operator/soft_operators.h"
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
@@ -27,8 +28,8 @@ void warning()
 }
 
 #define TOP   0
-#define BOT   1
-#define LEFT  2
+#define BOT   2
+#define LEFT  1
 #define RIGHT 3
 
 void check_padding(struct array_node* arr)
@@ -68,7 +69,7 @@ void check_padding(struct array_node* arr)
     }
 
     if (index != 4)
-        panic(" \"pad\" : [top, bot, left, right]");
+        panic(" \"pad\" : [top, left, bot, right]");
 }
 
 void check_conv3(struct obj_node* obj)
@@ -656,22 +657,40 @@ void check_soft_addr(struct obj_node* obj)
     BOOL_TYPE has_input = FALSE;
     BOOL_TYPE has_output = FALSE;
     struct obj_node* cur = obj;
+    u_int64_t _tw = 0;
+    u_int64_t _th = 0;
+    u_int64_t _input = 0;
+    u_int64_t _output = 0;
+    char* tmp;
+
     while(cur -> next)
     {
         if(strcmp(cur->kv->key, "input_addr") == 0)
         {
+            if(cur->kv->val->type != STR)
+                    panic("input_addr in soft operator should be a hex string");
+            _input = strtoul(cur->kv->val->str, &tmp, 16);
             has_input = TRUE;
         }
         else if(strcmp(cur->kv->key, "output_addr") == 0)
         {
+            if(cur->kv->val->type != STR)
+                    panic("output_addr in soft operator should be a hex string");
+            _output = strtoul(cur->kv->val->str, &tmp, 16);
             has_output = TRUE;
         }
         else if(strcmp(cur->kv->key, "tile_width") == 0)
         {
+            if(cur->kv->val->type != NUM)
+                    panic("tile_width in soft operator should be a num");
+            _tw = cur->kv->val->num;
             has_tw = TRUE;
         }
         else if(strcmp(cur->kv->key, "tile_height") == 0)
         {
+            if(cur->kv->val->type != NUM)
+                    panic("tile_height in soft operator should be a num");
+            _th = cur->kv->val->num;
             has_th = TRUE;
         }
         else
@@ -680,13 +699,16 @@ void check_soft_addr(struct obj_node* obj)
         }
         cur = cur->next;
     }
+    if((has_input && has_output && has_th && has_tw) == 0)
+            panic("addr in softoperator missing keyword\n");
+    set_soft_operator_addr(cur_instr_data, (u_int16_t)_th, (u_int16_t)_tw, (u_int32_t)_input, (u_int32_t)_output);
 }
 
 void check_soft_instr(struct obj_node* instr)
 {
     struct obj_node* cur = instr;
     BOOL_TYPE has_name = FALSE;
-    BOOL_TYPE has_para = FALSE;
+//    BOOL_TYPE has_para = FALSE;
     BOOL_TYPE has_addr = FALSE;
     while(cur -> next)
     {
@@ -696,8 +718,11 @@ void check_soft_instr(struct obj_node* instr)
             if (cur->kv->val->type != STR)
             {
                 panic("soft operator's name have to be a string\n");
-            } 
+            }
+            u_int8_t opcode = get_opcode(cur->kv->val->str);
+            cur_instr_data->soft_first_word = SOFT_SET_OPCODE(cur_instr_data->soft_first_word, opcode);
         }
+        /*
         else if(strcmp(cur->kv->key, "paras") == 0)
         {
             has_para = TRUE;
@@ -706,6 +731,7 @@ void check_soft_instr(struct obj_node* instr)
                 panic("soft operator's paras have to be a obj\n");
             }
         }
+        */
         else if (strcmp(cur->kv->key, "soft") == 0)
         {
         
@@ -715,7 +741,7 @@ void check_soft_instr(struct obj_node* instr)
             has_addr = TRUE;
             if(cur->kv->val->type != OBJ)
                     panic("addr type should be a obj\n");
-            check_soft_addr(cur->kv->val);
+            check_soft_addr(cur->kv->val->obj);
         }
         else
         {
@@ -728,10 +754,16 @@ void check_soft_instr(struct obj_node* instr)
     {
         panic("soft operator did not have name\n");
     }
+    if(has_addr == FALSE)
+    {
+        panic("soft operator did not have addr obj\n");
+    }
+    /*
     if(has_para == FALSE)
     {
         panic("soft operator did not have para\n");
     }
+    */
 }
 
 BOOL_TYPE is_for_conv(struct obj_node* instr)
@@ -898,7 +930,6 @@ void check_instrs(struct array_node* cur)
 
         cur = cur->next;        
     }
-    set_last_hard(last_hard_instr->data);
     code_gen(header);
 }
 

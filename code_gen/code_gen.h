@@ -18,6 +18,11 @@
 #define QUANTI_POS_SLOPE(WORD) (GET_BIT_BETWEEN(WORD, 0, 15))
 #define QUANTI_NEG_SLOPE(WORD) (GET_BIT_BETWEEN(WORD, 16, 31))
 
+#define SOFT_SET_OPCODE(WORD, OPCODE) (WORD | OPCODE)
+#define SOFT_SET_TILE_HEIGHT(WORD, HEIGHT) (WORD | HEIGHT<<16)
+#define SOFT_SET_TILE_WIDTH(WORD, WIDTH) (WORD | WIDTH)
+
+
 struct instr_data
 {
     int type;  // indicate whether is a soft_operator or not
@@ -108,5 +113,7 @@ void set_padtop(struct instr_data* instr);
 void set_padbot(struct instr_data* instr);
 void set_padleft(struct instr_data* instr);
 void set_padright(struct instr_data* instr);
+
+void set_soft_operator_addr(struct instr_data* instr, u_int16_t th, u_int16_t tw, u_int32_t input_addr, u_int32_t output_addr);
 
 void code_gen(struct instrs* prog);

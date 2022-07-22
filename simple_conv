@@ -10,30 +10,12 @@
                     "byte_perline":100,
                     "byte_perchan":50
                 },
-                "other_addr":
-                {
-                    "tile_height": 43,
-                    "tile_width": 43,
-                    "addr": "0x8989",
-                    "byte_perline": 100,
-                    "byte_perchan": 50
-                },
                 "operators":
                 {
                     "conv3":
                     {
                         "chan_num": 54,
                         "pad": [1,1,1,0]
-                    },
-                    "activate":
-                    {
-                        "pos_slope" : "0.32",
-                        "neg_slope" : "-1"
-                    },
-                    "quantize":
-                    {
-                        "pos_slope" : "3.4",
-                        "neg_slope" : "5"
                     }
                 },
                 "write_back":

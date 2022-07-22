@@ -1,0 +1,2 @@
+#define MAX_WEIGHT_FILE_LEN 1024
+

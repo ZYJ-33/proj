@@ -1,2 +1,5 @@
 make build
-./as $(file)
+./as $(file) $(weight_file) $(output_file)
+
+// also generate a byte_per_line file
+// see example in simple_conv file

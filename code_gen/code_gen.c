@@ -15,6 +15,8 @@
 #define TRUE 1
 #define FALSE 0
 #define WORD_LEN 32
+#define SOFT_INSTR_WORD_COUNT 6
+
 extern char* weights;
 extern u_int32_t weight_cur_index;
 extern u_int32_t weight_len;
@@ -26,7 +28,12 @@ void set_hard_instr_default(struct instr_data* instr)
 
 void set_soft_instr_default(struct instr_data* instr)
 {
-
+    instr->soft_first_word = 0;
+    instr->soft_second_word = 0;
+    instr->input_addr = 0;
+    instr->output_addr = 0;
+    instr->para_offset = 0;
+    instr->para_byte_len = 0;
 }
 
 void set_weights(struct instr_data* instr, u_int32_t channum, u_int32_t ker_size)
@@ -183,7 +190,7 @@ void travel_hdr(struct instr_header* hdr)
 
 void travel_data(struct instr_data* data)
 {
-    printf("Config: %lx\n", data->config);
+    printf("\nConfig: %lx\n", data->config);
     output_binary(data->config, 64);
     write_bin_64(data->config);
     if(data->has_conv_size)
@@ -239,12 +246,14 @@ void travel_data(struct instr_data* data)
 void travel_weight(struct weight_list* l)
 {
     struct weight_node* cur = l->header;
+    printf("\n========== weight ==========\n");
     while(cur)
     {
-        printf("%x ", cur->weight);
+        printf("%x\n", cur->weight);
         write_bin_64(cur->weight);
         cur = cur->next;
     }
+    printf("\n===================== weight_end =====================\n");
 }
 
 u_int64_t instr_hdr(u_int8_t id, u_int8_t type, u_int16_t len)
@@ -262,8 +271,9 @@ void write_hardinstrs(struct instrs* first, struct instrs* last, u_int32_t len)
 {
     if(total_instr_count == 255)
             panic("total instr has over 255");
-    u_int64_t hdr = instr_hdr(total_instr_count++, HARD, len);
+    u_int64_t hdr = instr_hdr(total_instr_count++, HARD, len+2);
     write_bin_64(hdr);
+    set_last_hard(last->data);
     while(first != last)
     {
         travel_data(first->data);
@@ -278,16 +288,40 @@ void write_hardinstrs(struct instrs* first, struct instrs* last, u_int32_t len)
 
 void write_softinstr(struct instrs* instr)
 {
-    printf("write to soft operator not impl yet\n");
+    if(total_instr_count == 255)
+            panic("total instr has over 255");
+    u_int64_t hdr = instr_hdr(total_instr_count++, SOFT, SOFT_INSTR_WORD_COUNT);
+    write_bin_64(hdr);
+    write_bin_32(instr->data->soft_first_word);
+    write_bin_32(instr->data->soft_second_word);
+    write_bin_32(instr->data->input_addr);
+    write_bin_32(instr->data->output_addr);
+    write_bin_32(instr->data->para_offset);
+    write_bin_32(instr->data->para_byte_len);
 }
 
 void init_write_buf(struct instrs* go)
 {
     u_int32_t total = 0;
+    u_int32_t first_hard = 0;
+
     while(go->next)
     {
-        total += 8;
-        total += (get_len(go->hdr)*WORD_LEN)/8;
+        if(get_type(go->hdr) == HARD)
+        {
+            if(first_hard == 0)
+            {
+                total += 8;
+                first_hard = 1;
+            }
+            total += ((get_len(go->hdr) - 2)*WORD_LEN)/8;
+        }
+        else if (get_type(go->hdr) == SOFT)
+        {
+            first_hard = 0;
+            total += 8;
+            total += (SOFT_INSTR_WORD_COUNT*WORD_LEN)/8;
+        }
         go = go->next;
     }
     char* buf = (char*) malloc(total);
@@ -309,7 +343,7 @@ void code_gen(struct instrs* instrs)
             if(first_hard == 0)
                     first_hard = instr;
             last_hard = instr;
-            hard_len += get_len(instr->hdr);
+            hard_len += (get_len(instr->hdr)-2);
             last_type = HARD;
        }
        else if(get_type(instr->hdr) == SOFT)
@@ -370,6 +404,9 @@ struct instr_header* calculate_header(struct instr_data* data)
 {
     u_int32_t id = glb_count++;
     u_int32_t len = 64/WORD_LEN;
+
+    if(data->type == HARD)
+    {
     if(data->has_accu_b_size)
             len += 64/WORD_LEN;
     if(data->has_accu_c_size)
@@ -388,11 +425,12 @@ struct instr_header* calculate_header(struct instr_data* data)
             len += 64/WORD_LEN;
     if(data->has_weight)
             len += (data->weight_count * 8)/WORD_LEN;
-
-    if(data->type == HARD)
         return new_header(id, HARD, len);
+    }
     else if(data->type == SOFT)
-        return new_header(id, SOFT, len);
+    {
+        return new_header(id, SOFT, len+6);
+    }
     else
         panic("unknown type in calculate_header");
 }
@@ -409,7 +447,6 @@ struct instr_data* new_instr(int type)
         panic("unknown type in new_instr");
     instr->weights = new_list();
     return instr;
-        
 }
 
 void set_post_mode(struct instr_data* instr, u_int64_t postmode)
@@ -463,8 +500,6 @@ void set_conv_sign(struct instr_data* instr, int is_uint8)
     instr->config = word;
 }
 
-// TODO: ADD FOUR PADDING
-
 void set_accuC_mode(struct instr_data* instr, int is_bias)
 {
     if(instr->type != HARD)
@@ -484,8 +519,6 @@ void set_accuC_mode(struct instr_data* instr, int is_bias)
     instr->config = word;
 }
 
-
-//TODO: add post mode
 
 void set_conv_size(struct instr_data* instr)
 {
@@ -507,7 +540,6 @@ void set_baseaddr0(struct instr_data* instr)
     instr->config = word;
 }
 
-//TODO: ADD baseaddr1 activation quantize 
 
 void set_has_weight(struct instr_data* instr)
 {
@@ -518,7 +550,6 @@ void set_has_weight(struct instr_data* instr)
     word = SET_BIT(word, HAS_WEIGHT);
     instr->config = word;
 }
-// TODO: ADD CONV ACCUB ACCUC WB ADDR OFFSET EN
 
 void set_conv_size_word(struct instr_data* instr, u_int64_t tw, u_int64_t th, u_int64_t bpl, u_int64_t bpc)
 {
@@ -614,6 +645,13 @@ void set_acti_word(struct instr_data* instr, BF16 pos_slope, BF16 neg_slope, BF1
     word |= (((u_int64_t)neg_thd) << 48);
     
     instr->acti = word;
+}
+
+void set_soft_operator_addr(struct instr_data* instr, u_int16_t th, u_int16_t tw, u_int32_t input_addr, u_int32_t output_addr)
+{
+    instr->soft_second_word = (u_int32_t)(((u_int32_t)th<<16) | ((u_int32_t)tw));
+    instr->input_addr = input_addr;
+    instr->output_addr = output_addr;
 }
 
 void set_last_hard(struct instr_data* instr)
