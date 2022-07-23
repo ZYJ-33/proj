@@ -32,8 +32,6 @@ char to_char(u_int8_t byte)
     panic("in to_char");
 }
 
-
-
 void write_bin_init(char* buf, u_int32_t len)
 {
     write_bin_total_len = len;
@@ -91,13 +89,13 @@ void print_hex(u_int8_t n)
     u_int8_t low = n & 0x0F;
     char _low = to_char(low);
     char _high = to_char(high);
-    printf("%c%c\n", _high, _low); 
+    printf(" %c%c ", _high, _low); 
 }
 
 void output_res()
 {
     printf("========== below are final binary ============\n");
-//    printf("bin buf total len %d\n", write_bin_total_len);
+    printf("bin buf total len %d\n", write_bin_total_len);
     for(u_int32_t i = 0; i<write_bin_cur; i++)
     {
             print_hex(write_bin_buf[i]);

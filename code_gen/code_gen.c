@@ -24,6 +24,8 @@ extern u_int32_t weight_len;
 void set_hard_instr_default(struct instr_data* instr)
 {
     set_accuC_mode(instr, 1);
+    instr->config = CLEAN_BIT_BETWEEN(instr->config, MAGIC_BEGIN, MAGIC_END);
+    instr->config = instr->config | ((u_int64_t)INSTR_MAGIC<<MAGIC_BEGIN);
 }
 
 void set_soft_instr_default(struct instr_data* instr)
@@ -407,6 +409,7 @@ struct instr_header* calculate_header(struct instr_data* data)
 
     if(data->type == HARD)
     {
+    len += 64/WORD_LEN;
     if(data->has_accu_b_size)
             len += 64/WORD_LEN;
     if(data->has_accu_c_size)
@@ -425,7 +428,7 @@ struct instr_header* calculate_header(struct instr_data* data)
             len += 64/WORD_LEN;
     if(data->has_weight)
             len += (data->weight_count * 8)/WORD_LEN;
-        return new_header(id, HARD, len);
+    return new_header(id, HARD, len);
     }
     else if(data->type == SOFT)
     {

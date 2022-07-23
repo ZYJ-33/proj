@@ -20,6 +20,8 @@
 #define ACC_B_ADDR_OFFSET_EN 41
 #define ACC_C_ADDR_OFFSET_EN 42
 #define WB_ADDR_OFFSET_EN 43
+#define MAGIC_BEGIN 44
+#define MAGIC_END 59
 #define LAST_CMD 63
 
 #define INSTR_MAGIC 0x5358
