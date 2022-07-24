@@ -415,7 +415,16 @@ void check_postmode(struct obj_node* obj)
             }
         }
    }
+}
 
+BOOL_TYPE is_empty_obj(struct val_node* node)
+{
+    if(node->type != OBJ)
+            panic("not a obj in is_empty_obj\n");
+    struct obj_node* cur = node->obj;
+    if(cur->kv != 0 || cur->next != 0)
+            return FALSE;
+    return TRUE;
 }
 
 void check_operators(struct obj_node* obj)
@@ -448,7 +457,7 @@ void check_operators(struct obj_node* obj)
         }
         else if(strcmp(kv->key, "maxpool") == 0)
         {
-            if(kv->val != 0)
+            if(!is_empty_obj(kv->val))
                    panic("maxpool don't have parameter");
             at_least_one = TRUE;
         }
