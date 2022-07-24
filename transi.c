@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void travel_val(struct val_node* val)
 {
@@ -77,6 +78,7 @@ void travel_obj(struct obj_node* cur)
 struct val_node* transit_val(struct basic_node* node)
 {
     struct val_node* val = (struct val_node*)malloc(sizeof(*val));
+    memset((void*)val, 0, sizeof(*val)); 
     struct data_node* dn = (struct data_node*)node;
     struct one_child_node* on = (struct one_child_node*)node;
     switch (node->type)
@@ -127,6 +129,7 @@ struct val_node* transit_val(struct basic_node* node)
 struct array_node* transit_arr(struct two_child_node* node)
 {
    struct array_node* arr = (struct array_node*)malloc(sizeof(*arr));
+   memset((void*)arr, 0, sizeof(*arr));
    if(node->fst == 0)
    {
            arr->next = 0;
@@ -148,6 +151,7 @@ struct array_node* transit_arr(struct two_child_node* node)
 struct obj_node* transit_obj(struct two_child_node* node)
 {
     struct obj_node* obj = (struct obj_node*)malloc(sizeof(*obj));
+    memset((void*)obj, 0, sizeof(*obj));
     if(node->fst == 0)
     {
             obj->kv = 0;

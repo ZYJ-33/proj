@@ -936,8 +936,8 @@ void check_instrs(struct array_node* cur)
 void check_progarm(struct obj_node* obj, char* weights, u_int32_t len)
 {
     struct key_val_node* kv = obj->kv;
-    if(strcmp(kv->key, "progarm") != 0)
-        panic("first key -> val is not a progarm\n");
+    if(strcmp(kv->key, "program") != 0)
+        panic("first key -> val is not a program\n");
     if(obj->next->kv != 0)
         panic("should only exist a progarm in top level\n");
     printf("have to set weight_data before going on");
