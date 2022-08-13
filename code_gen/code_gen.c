@@ -68,7 +68,7 @@ void set_weights(struct instr_data* instr, u_int32_t channum, u_int32_t ker_size
     if(total != 0)
     {
         u_int64_t res = (*ptr);
-        res = CLEAN_LOW_BIT(res, (8-total)*8);
+        res = CLEAN_HIGH_BIT(res, (8-total)*8);
         add_weight(instr->weights, res);
     }
 }
@@ -264,7 +264,7 @@ u_int64_t instr_hdr(u_int8_t id, u_int8_t type, u_int16_t len)
     hdr |= len;
     hdr |= ((u_int64_t)type << 16);
     hdr |= ((u_int64_t)id << 24);
-    hdr |= ((u_int64_t)0x7878 << 32);
+    hdr |= ((u_int64_t)HEADER_MAGIC << 32);
     return hdr;
 }
 

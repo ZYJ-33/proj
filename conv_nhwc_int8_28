@@ -1,0 +1,35 @@
+{
+    "program":
+    [
+        {
+                "input_addr":
+                {
+                    "tile_height":28,
+                    "tile_width":28,
+                    "addr": "0x100000",
+                    "byte_perline":28,
+                    "byte_perchan":784
+                },
+                "operators":
+                {
+                    "conv3":
+                    {
+                        "chan_num": 1,
+                        "pad": [1,1,1,1]
+                    },
+                    "quantize":
+                    {
+                        "pos_slope" : "1.0",
+                        "neg_slope" : "1.0"
+                    }
+                },
+                "write_back":
+                {
+                    "addr": "0x1000000",
+                    "byte_perline": 28,
+                    "byte_perchan": 784
+                }
+        }
+    ]
+}
+
